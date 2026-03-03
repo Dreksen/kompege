@@ -1,4 +1,3 @@
-# from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from seleniumwire import webdriver
@@ -9,11 +8,20 @@ import time
 import os
 import pickle
 from fake_useragent import UserAgent
-from config import prob_id
+import argparse
+
+parser = argparse.ArgumentParser(description="Get answers from kompege.ru")
+parser.add_argument("--prob-id", required=True, help="Variant/problem id on kompege.ru")  # обязательный аргумент [web:124]
+parser.add_argument("--headless", action="store_true", help="Run Chrome in headless mode")  # флаг [web:124]
+args = parser.parse_args()
+
+prob_id = args.prob_id
 
 options = Options()
-
 options.add_argument('--disable-blink-features=AutomationControlled')
+
+if args.headless:
+    options.add_argument('--headless')
 
 user_agents_filename = 'user_agents.pkl'
 ua = UserAgent()
@@ -32,9 +40,9 @@ else:
     options.add_argument(f'user-agent={random_user_agent}')
 
 driver = webdriver.Chrome(
-                        service=Service(ChromeDriverManager().install()), 
-                        options=options
-                        )
+    service=Service(ChromeDriverManager().install()),
+    options=options
+)
 driver.implicitly_wait(120)
 
 general_url = 'https://kompege.ru/login/'
@@ -42,7 +50,6 @@ driver.get(general_url)
 
 driver.find_element(by=By.XPATH, value='//*[@id="app"]/div/div[4]/div[2]/input[1]').send_keys(prob_id)
 driver.find_element(by=By.XPATH, value='//*[@id="app"]/div/div[4]/div[2]/input[2]').click()
-
 
 driver.find_element(by=By.XPATH, value='//*[@id="app"]/div/div[4]/div[2]/input[2]').click()
 driver.find_element(By.CLASS_NAME, "end").find_element(By.TAG_NAME, "span").click()
@@ -79,7 +86,7 @@ for i in range(27):
         driver.back()
     time.sleep(1)
 
-with open("answers.txt", "w") as file:
+with open("answers.txt", "w", encoding="utf-8") as file:
     for key, value in answers.items():
         file.write(f"{key + 1}: {value}\n")
 
@@ -88,5 +95,5 @@ if random_user_agent not in user_agents:
     with open(user_agents_filename, 'wb') as f:
         pickle.dump(user_agents, f)
 
-
 print('the end')
+
